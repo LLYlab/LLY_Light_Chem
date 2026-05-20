@@ -216,7 +216,7 @@ class SpectrumApp:
     def __init__(self, root):
         self.root = root
         root.title("光谱仪解析系统 v2.0")
-        root.geometry("800x600")
+        root.geometry("1000x600")
 
         # 变量
         self.image_path = tk.StringVar()
