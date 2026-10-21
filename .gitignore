@@ -1,0 +1,26 @@
+# OS / 编辑器
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+*.suo
+*.user
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 本地临时
+_dom.html
+*.tmp
+*.log
+.edge*/
+
+# 内部材料：只留本地，永不入库
+docs/推荐词.md
+docs/内部*

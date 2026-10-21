@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 单元测试（算法层）
+        run: node --test tests/core.test.mjs
+
+      - name: 资源完整性
+        run: node tools/check_web.mjs
+
+      - name: 冒烟：页面能被静态解析
+        run: |
+          node -e "
+          const fs=require('fs');
+          for (const f of ['web/index.html','web/lab.html']) {
+            const s=fs.readFileSync(f,'utf8');
+            if(!s.includes('<!doctype html')) throw new Error(f+' 缺少 doctype');
+            if(!/<title>/.test(s)) throw new Error(f+' 缺少 title');
+            console.log(f, 'ok', s.length, 'bytes');
+          }"

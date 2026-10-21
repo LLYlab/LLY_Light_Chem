@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>检验台 · SpectraLab</title>
+<meta name="theme-color" content="#070a14" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .lab-shell { max-width: 1120px; margin: 0 auto; padding: 24px 16px 60px; }
+  .lab-hero h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.4px; }
+  .lab-hero p { margin: 0 0 22px; color: var(--muted); line-height: 1.7; max-width: 720px; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .card span { font-size: 11px; color: var(--muted); display: block; margin-bottom: 6px; }
+  .card b { font-family: var(--mono); font-size: 22px; }
+  .card.good b { color: var(--good); }
+  .card.bad b { color: var(--bad); }
+  .actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .suite { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; overflow: hidden; background: var(--panel); }
+  .suite-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .suite-name { font-weight: 600; font-size: 13.5px; }
+  .suite-detail { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .status { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .status.pass { background: var(--good); box-shadow: 0 0 10px var(--good); }
+  .status.fail { background: var(--bad); box-shadow: 0 0 10px var(--bad); }
+  .status.run { background: var(--warn); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .suite-bar { height: 2px; background: rgba(255,255,255,.05); }
+  .suite-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent-2)); width: 0; transition: width .3s; }
+  .log { margin-top: 18px; background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-family: var(--mono); font-size: 11.5px; line-height: 1.8; color: var(--muted); max-height: 240px; overflow: auto; }
+  .log .ok { color: var(--good); }
+  .log .no { color: var(--bad); }
+  @media (max-width: 720px) { .cards { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body class="lab">
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="26" height="26">
+        <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#7c5cff"/><stop offset=".5" stop-color="#22d3ee"/><stop offset="1" stop-color="#f59e0b"/>
+        </linearGradient></defs>
+        <rect x="2" y="13" width="28" height="6" rx="3" fill="url(#lg2)" opacity=".9"/>
+        <rect x="8" y="6" width="2.2" height="20" rx="1.1" fill="#e8ecf8"/>
+        <rect x="21" y="4" width="2.6" height="24" rx="1.3" fill="#e8ecf8"/>
+      </svg>
+    </span>
+    <span class="brand-text"><strong>SpectraLab</strong><small>检验台</small></span>
+  </a>
+  <nav class="nav">
+    <a href="./">工作台</a>
+    <a href="lab.html" class="active">检验台</a>
+  </nav>
+</header>
+
+<main class="lab-shell">
+  <section class="lab-hero">
+    <h1>连续检验台</h1>
+    <p>
+      这里用<b>合成光谱</b>（已知谱线位置、已知色散、已知噪声）反过来考算法：
+      找峰能不能找到、标定能不能还原波长、元素会不会认错。
+      每次点「跑一次」都会用不同的随机参数重跑，所以它回答的是
+      <b>「这套算法稳不稳」</b>，而不是「演示好不好看」。
+    </p>
+  </section>
+
+  <section class="cards">
+    <div class="card" id="card-pass"><span>通过 / 总数</span><b>—</b></div>
+    <div class="card" id="card-rate"><span>通过率</span><b>—</b></div>
+    <div class="card" id="card-worst"><span>最差波长误差</span><b>—</b></div>
+    <div class="card" id="card-time"><span>总耗时</span><b>—</b></div>
+  </section>
+
+  <div class="actions">
+    <button class="btn primary" id="run-once">跑一次</button>
+    <button class="btn" id="run-loop">连续 30 轮</button>
+    <button class="btn ghost" id="stop" disabled>停止</button>
+    <button class="btn ghost" id="export">导出结果 JSON</button>
+    <span class="muted" style="margin-left:auto;align-self:center;font-size:12px" id="loop-info"></span>
+  </div>
+
+  <section id="suites"></section>
+  <div class="log" id="log">等待运行…</div>
+</main>
+
+<script type="module" src="js/lab.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "SpectraLab · 光谱仪解析系统",
+  "short_name": "SpectraLab",
+  "description": "上传一张光谱照片，自动找谱线、标定波长、识别元素、算光栅常数。纯本地运算。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070a14",
+  "theme_color": "#070a14",
+  "orientation": "any",
+  "lang": "zh-CN",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "spectralab",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SpectraLab — 光谱仪解析系统：一张光谱照片 → 谱线表、波长标定、元素识别、光栅常数。纯前端、可离线、移动端可安装。",
+  "license": "MIT",
+  "author": "LLYlab",
+  "homepage": "https://llylab.github.io/LLY_Light_Chem/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LLYlab/LLY_Light_Chem.git"
+  },
+  "keywords": [
+    "spectrometer",
+    "spectroscopy",
+    "physics-lab",
+    "wavelength-calibration",
+    "grating",
+    "image-processing",
+    "education",
+    "pwa",
+    "offline"
+  ],
+  "scripts": {
+    "test": "node --test tests/core.test.mjs",
+    "check": "node tools/check_web.mjs",
+    "serve": "node tools/serve.mjs",
+    "icons": "python tools/make_icons.py",
+    "verify": "npm test && npm run check"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

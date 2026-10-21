@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SpectraLab · 光谱仪解析系统</title>
+<meta name="description" content="上传一张光谱照片，自动找谱线、标定波长、识别元素、算光栅常数。纯本地运算，不上传任何图片。" />
+<meta name="theme-color" content="#070a14" />
+<meta property="og:title" content="SpectraLab · 光谱仪解析系统" />
+<meta property="og:description" content="一张手机照片 → 一条可信的谱线表。找峰、标定、元素识别、光栅常数，全在浏览器本地完成。" />
+<meta property="og:type" content="website" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="./" aria-label="SpectraLab 首页">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="26" height="26">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#7c5cff"/><stop offset=".35" stop-color="#22d3ee"/>
+            <stop offset=".7" stop-color="#34d399"/><stop offset="1" stop-color="#f59e0b"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="13" width="28" height="6" rx="3" fill="url(#lg)" opacity=".9"/>
+        <rect x="7" y="6" width="2.4" height="20" rx="1.2" fill="#e8ecf8" opacity=".9"/>
+        <rect x="14" y="9" width="1.8" height="14" rx=".9" fill="#e8ecf8" opacity=".55"/>
+        <rect x="21" y="4" width="2.8" height="24" rx="1.4" fill="#e8ecf8"/>
+      </svg>
+    </span>
+    <span class="brand-text">
+      <strong>SpectraLab</strong>
+      <small>光谱仪解析系统</small>
+    </span>
+  </a>
+
+  <nav class="nav">
+    <a href="./" class="active">工作台</a>
+    <a href="lab.html">检验台</a>
+    <a href="https://github.com/LLYlab/LLY_Light_Chem#readme" target="_blank" rel="noopener">文档</a>
+  </nav>
+
+  <div class="top-actions">
+    <span class="pill" id="ver">v2.0</span>
+    <button class="icon-btn" id="btn-install" hidden title="安装到桌面 / 主屏幕">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-theme" title="切换深色 / 浅色">
+      <svg viewBox="0 0 24 24" width="18" height="18" class="i-moon"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ============ 左：输入与控制 ============ -->
+  <aside class="panel controls" id="panel-controls">
+    <div class="panel-head">
+      <h2>输入</h2>
+      <span class="hint" id="file-meta">未载入</span>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="file" accept="image/*" hidden />
+      <input type="file" id="file-camera" accept="image/*" capture="environment" hidden />
+      <div class="dz-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="40" height="40">
+          <rect x="5" y="8" width="38" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 30l8-8 6 6 6-7 8 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="17" cy="17" r="2.6" fill="currentColor"/>
+        </svg>
+      </div>
+      <p class="dz-title" id="dz-title">拖入光谱照片</p>
+      <p class="dz-sub" id="dz-sub">JPG / PNG / HEIC 转出的图 · 全程本地处理</p>
+      <div class="dz-actions">
+        <button class="btn primary" id="btn-file" type="button">选择图片</button>
+        <button class="btn ghost" id="btn-camera" type="button">手机拍照</button>
+        <button class="btn ghost" id="btn-demo" type="button">载入示例</button>
+      </div>
+    </div>
+
+    <details class="accordion" open>
+      <summary>谱线检测</summary>
+      <div class="accordion-body">
+        <label class="field">
+          <span>灵敏度 <b id="v-sens">6%</b></span>
+          <input type="range" id="sens" min="1" max="20" value="6" />
+          <small>只保留高于最大亮度这个比例的峰</small>
+        </label>
+        <label class="field">
+          <span>最小间距 <b id="v-dist">6 px</b></span>
+          <input type="range" id="dist" min="2" max="30" value="6" />
+          <small>双线（如钠 589.0/589.6）需要调小</small>
+        </label>
+        <label class="field">
+          <span>平滑窗口 <b id="v-smooth">5</b></span>
+          <input type="range" id="smooth" min="1" max="15" step="2" value="5" />
+          <small>噪声大时调大，细线会被抹平</small>
+        </label>
+      </div>
+    </details>
+
+    <details class="accordion" open>
+      <summary>波长标定</summary>
+      <div class="accordion-body">
+        <label class="field">
+          <span>灯源</span>
+          <select id="lamp"></select>
+          <small id="lamp-note">用已知谱线的灯自动定标</small>
+        </label>
+        <div class="row-2">
+          <button class="btn" id="btn-calib" type="button">自动标定</button>
+          <button class="btn ghost" id="btn-clear-calib" type="button">清除</button>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="quad" />
+          <span>二次校正（色散非线性时勾选）</span>
+        </label>
+        <div class="manual">
+          <p class="mini-title">或手动输入两点</p>
+          <div class="grid-4">
+            <input id="m-x1" inputmode="decimal" placeholder="x₁ (px)" />
+            <input id="m-l1" inputmode="decimal" placeholder="λ₁ (nm)" />
+            <input id="m-x2" inputmode="decimal" placeholder="x₂ (px)" />
+            <input id="m-l2" inputmode="decimal" placeholder="λ₂ (nm)" />
+          </div>
+          <button class="btn ghost sm" id="btn-manual" type="button">套用两点标定</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion" open>
+      <summary>光栅常数</summary>
+      <div class="accordion-body">
+        <div class="grid-3">
+          <label class="field"><span>级次 k</span><input id="g-k" type="number" min="1" step="1" value="1" /></label>
+          <label class="field"><span>左游标 (°)</span><input id="g-left" type="number" step="0.01" placeholder="120.00" /></label>
+          <label class="field"><span>右游标 (°)</span><input id="g-right" type="number" step="0.01" placeholder="60.00" /></label>
+        </div>
+        <div class="row-2">
+          <label class="field"><span>波长 λ (nm)</span><input id="g-lambda" type="number" step="0.01" value="546.07" /></label>
+          <label class="field"><span>角度不确定度 σθ (°)</span><input id="g-sigma" type="number" step="0.001" value="0.01" /></label>
+        </div>
+        <button class="btn" id="btn-grating" type="button">计算 d</button>
+        <div class="result-line" id="grating-out" hidden></div>
+      </div>
+    </details>
+
+    <div class="panel-foot">
+      <button class="btn ghost sm" id="btn-reset" type="button">重置</button>
+      <button class="btn ghost sm" id="btn-help" type="button">怎么拍</button>
+    </div>
+  </aside>
+
+  <!-- ============ 中：画布 ============ -->
+  <section class="panel stage" id="panel-stage">
+    <div class="stage-toolbar">
+      <div class="seg">
+        <button class="icon-btn sm" id="zoom-out" title="缩小">−</button>
+        <span id="zoom-label">100%</span>
+        <button class="icon-btn sm" id="zoom-in" title="放大">+</button>
+        <button class="icon-btn sm" id="zoom-fit" title="适应宽度">⤢</button>
+      </div>
+      <div class="seg grow">
+        <label class="inline">剖面行
+          <input type="range" id="row-range" min="0" max="1000" value="500" />
+          <b id="row-label">50%</b>
+        </label>
+        <label class="inline">行宽
+          <input type="range" id="band-range" min="1" max="41" value="9" />
+          <b id="band-label">9 px</b>
+        </label>
+      </div>
+      <div class="seg">
+        <label class="check sm"><input type="checkbox" id="show-profile" checked /><span>剖面</span></label>
+        <label class="check sm"><input type="checkbox" id="show-marks" checked /><span>标记</span></label>
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="stage"></canvas>
+      <div class="canvas-empty" id="canvas-empty">
+        <div class="spectrum-strip" aria-hidden="true"></div>
+        <p>还没有图像</p>
+        <span>把照片拖进左侧，或点「载入示例」先看效果</span>
+      </div>
+      <div class="tooltip" id="tip" hidden></div>
+    </div>
+
+    <div class="profile-wrap" id="profile-wrap">
+      <canvas id="profile"></canvas>
+      <div class="profile-axis"><span id="px0">0</span><span id="px1">0 px</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 右：结果 ============ -->
+  <aside class="panel results" id="panel-results">
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="peaks" role="tab">谱线 <em id="badge-peaks">0</em></button>
+      <button class="tab" data-tab="calib" role="tab">标定</button>
+      <button class="tab" data-tab="elements" role="tab">元素</button>
+      <button class="tab" data-tab="report" role="tab">报告</button>
+    </div>
+
+    <div class="panes">
+      <div class="pane active" data-pane="peaks">
+        <div class="pane-empty" id="peaks-empty">载入图像并检测后，这里列出每条谱线的位置、波长与颜色。</div>
+        <div class="table-wrap" id="peaks-table-wrap" hidden>
+          <table class="table" id="peaks-table">
+            <thead><tr><th>#</th><th>x (px)</th><th>λ (nm)</th><th>相对强度</th><th>匹配</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pane-foot">
+          <button class="btn ghost sm" id="btn-csv">导出 CSV</button>
+          <button class="btn ghost sm" id="btn-json">导出 JSON</button>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="calib">
+        <div class="pane-empty" id="calib-empty">选一个灯源后点「自动标定」，这里会给出色散率、截距与拟合质量。</div>
+        <div id="calib-body" hidden>
+          <div class="stat-grid">
+            <div class="stat"><span>色散率 a</span><b id="c-a">—</b><small>nm / px</small></div>
+            <div class="stat"><span>截距 b</span><b id="c-b">—</b><small>nm</small></div>
+            <div class="stat"><span>R²</span><b id="c-r2">—</b><small>拟合优度</small></div>
+            <div class="stat"><span>RMS</span><b id="c-rms">—</b><small>nm</small></div>
+          </div>
+          <canvas id="fit-chart" class="fit-chart"></canvas>
+          <p class="note" id="c-note"></p>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="elements">
+        <div class="pane-empty" id="elements-empty">识别结果会按"命中谱线数"排序，并给出每条线的残差。</div>
+        <div id="elements-body" hidden></div>
+      </div>
+
+      <div class="pane" data-pane="report">
+        <div class="report-form">
+          <label class="field"><span>实验名称</span><input id="r-title" value="光栅光谱仪测波长与光栅常数" /></label>
+          <div class="grid-2">
+            <label class="field"><span>姓名</span><input id="r-name" placeholder="选填" /></label>
+            <label class="field"><span>学号</span><input id="r-id" placeholder="选填" /></label>
+          </div>
+          <div class="row-2">
+            <button class="btn primary" id="btn-report" type="button">生成报告图</button>
+            <button class="btn ghost" id="btn-print" type="button">打印 / 存 PDF</button>
+          </div>
+          <p class="note">报告包含：原始图、谱线表、标定参数、光栅常数与不确定性。生成后可直接保存 PNG。</p>
+        </div>
+        <div class="report-preview" id="report-preview" hidden></div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="statusbar">
+  <span id="st-size">—</span>
+  <span class="dot"></span>
+  <span id="st-peaks">0 条谱线</span>
+  <span class="dot"></span>
+  <span id="st-time">—</span>
+  <span class="grow"></span>
+  <span class="muted">图片只在本机处理 · SpectraLab <span id="st-ver">v2.0</span></span>
+</footer>
+
+<!-- 帮助弹窗 -->
+<dialog id="help" class="dialog">
+  <h3>怎么拍一张能用的光谱照片</h3>
+  <ol>
+    <li><b>对准狭缝</b>：让谱线横平竖直，不要斜着拍。</li>
+    <li><b>别过曝</b>：亮线周围不要糊成一片白，暗背景里能看到几条清楚的线最好。</li>
+    <li><b>带上标尺</b>：如果可能，同一张图里拍到刻度或已知双线（钠双线最好）。</li>
+    <li><b>拍平</b>：手机尽量与屏幕/目镜平行，避免透视变形。</li>
+    <li><b>多拍几张</b>：同一组条件拍 3 张，挑最清楚的。</li>
+  </ol>
+  <p class="note">识别不准时，先调左侧「灵敏度 / 最小间距 / 平滑窗口」，再看「标定」里的 R²。</p>
+  <div class="dialog-actions"><button class="btn" id="help-close">知道了</button></div>
+</dialog>
+
+<dialog id="toast" class="toast"></dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
